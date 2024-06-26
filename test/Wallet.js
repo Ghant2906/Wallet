@@ -20,7 +20,19 @@ describe("Wallet", function () {
     expect(totalETHReceived).to.equal(depositAmount);
   });
 
+  it("Should rejected because it is not exits in whitelist", async function () {
+    await expect(wallet.faucet(addr1.address)).to.be.revertedWith(
+      "Not in whitelist"
+    );
+  });
+
+  it("Should add address to whitelist", async function () {
+    await wallet.addWhiteList(addr1.address);
+    expect(await wallet.whiteList(addr1.address)).to.equal(true);
+  });
+
   it("Should send 0.01 ETH from contract to address", async function () {
+    await wallet.addWhiteList(addr2.address);
     const depositAmount = ethers.parseEther("1.0");
     await wallet.connect(addr1).deposit({ value: depositAmount });
     const faucetAmount = ethers.parseEther("0.01");
@@ -31,6 +43,12 @@ describe("Wallet", function () {
 
     const finalBalance = await ethers.provider.getBalance(addr2.address);
     expect(finalBalance).to.equal(addr2Balance + faucetAmount);
+  });
+
+  it("should remove address from whitelist", async function () {
+    await wallet.addWhiteList(addr1.address);
+    await wallet.removeWhiteList(addr1.address);
+    expect(await wallet.whiteList(addr1.address)).to.equal(false);
   });
 
   it("Should withdraw ETH from contract to owner", async function () {
